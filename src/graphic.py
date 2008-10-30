@@ -31,7 +31,7 @@ from matplotlib.backends.backend_gtk import FigureCanvasGTK, NavigationToolbar
 
 class Graphic:
     def __init__(self, widget):
-        self.figure = Figure(figsize=(8,6), dpi=72)
+        self.figure = Figure(figsize=(10,6), dpi=96)
         self.axes = self.figure.add_subplot(111)
         self.axes.grid(True)
         #self.plot = ptl

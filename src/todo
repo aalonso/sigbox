@@ -8,6 +8,7 @@ Cepstrum: real(iftt(|H(w)|))
 Todo:
 * Suprimir bandas en dominio de frecuencia
 * Derivar de matplotlib para cargar la señal de inicio
+* Merge cepstrum functionality, display cepstrum for imput file
 
 
 Enhacements:

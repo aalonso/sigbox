@@ -60,19 +60,32 @@ class sigBox:
         self.signal_graph = Graphic(self.wTree.get_widget('vbox_signal'))
         self.fft_graph = Graphic(self.wTree.get_widget('vbox_fft'))
         self.ifft_graph = Graphic(self.wTree.get_widget('vbox_ifft'))
+        self.ceps_graph = Graphic(self.wTree.get_widget('vbox_ceps'))
         
-        self.signal_graph.axes.set_xlabel('Time (s)')
+        self.signal_graph.axes.set_xlabel('Time')
         self.signal_graph.axes.set_ylabel('Amplitude')
         self.signal_graph.axes.set_title('Signal')
+        
+        self.fft_graph.axes.set_title('Frequency Response')
+        self.fft_graph.axes.set_xlabel('f(Hz)')
+        self.fft_graph.axes.set_ylabel('Amplitude')
+
+        self.ifft_graph.axes.set_title('Ifft')
+        self.ifft_graph.axes.set_xlabel('Time')
+        self.ifft_graph.axes.set_ylabel('Amplitude')
+
+        self.ceps_graph.axes.set_title('Cepstrum')
+        self.ceps_graph.axes.set_xlabel('Time')
+        self.ceps_graph.axes.set_ylabel('Amplitude')
 
         self.wTree.get_widget("window_main").show_all()
-
 
     def on_sigbox_destroy(self, widget):
     	"""" sigbox destroy """
         self.signal_graph.destroy()
         self.fft_graph.destroy()
         self.ifft_graph.destroy()
+        self.ceps_graph.destroy()
     	gtk.main_quit ()
 
     def on_menu_file_new(self, widget):
@@ -92,6 +105,7 @@ class sigBox:
         self.signal_graph.destroy()
         self.fft_graph.destroy()
         self.ifft_graph.destroy()
+        self.ceps_graph.destroy()
     	gtk.main_quit()
 	
     def on_menu_design_filter(self, widget):
@@ -127,6 +141,7 @@ class sigBox:
         self.dialog.run()
         
         if self.dialog.file:
+            self.signal_graph.axes.clear()
             y, fs, bits = wavread(self.dialog.file)
             Fs = 'Fs = %d' %(fs)
             fs = float(fs)
@@ -140,9 +155,8 @@ class sigBox:
         self.dialog = None
 	
     def on_toolbutton_clear(self, widget):
-    	""" Toolbutton clear clicked """
+    	""" Toolbutton clear clicked """ 
         
-
 
     def on_toolbutton_execute(self, widget):
     	""" Toolbutton exceute clicked """
@@ -164,14 +178,15 @@ class sigBox:
             #self.image_freq.set_from_file('../data/fir_resp.png')
         elif self.glob_opt['exec'] == 'Frecuency response':
             options = self.config.getConfig('freq_opt')
-            fft_sig(options)
+            fft_sig(options, graph_fft = self.fft_graph, graph_ifft = self.ifft_graph)
+            cepstrum(options, graph_ceps = self.ceps_graph)
             #self.image_freq.set_from_file('../data/fft_sig.png')
             #self.image_time.set_from_file('../data/orig_sig.png')
             #self.image_ifft.set_from_file('../data/ifft_sig.png')
-        elif self.glob_opt['exec'] == 'Cepstral response':
-            options = self.config.getConfig('freq_opt')
-            cepstrum(options)
+        #elif self.glob_opt['exec'] == 'Cepstral response':
+        #    options = self.config.getConfig('freq_opt')
             #self.image_freq.set_from_file('../data/ceps_sig.png')
+            #cepstrum(options)
         
         # Display graphics
         show()

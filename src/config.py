@@ -29,6 +29,7 @@ class Config:
                     'fc' : 300,
                     'fh' : 800,
                     'gain' : 1,
+                    'order' : 30,
                     'win' : 'Hamming',
                     'iirftype' : 'Butterworth',
                 },

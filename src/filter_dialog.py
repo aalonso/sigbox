@@ -53,6 +53,8 @@ class filterDialog:
         entry.set_value(self.filter_opt['fh'])
         entry = self.wTree.get_widget('spinbutton_gain')
         entry.set_value(self.filter_opt['gain'])
+        entry = self.wTree.get_widget('spinbutton_order')
+        entry.set_value(self.filter_opt['order'])
 
         combobox = self.wTree.get_widget('combobox_wtype')
         pattern = str(self.filter_opt['win'])
@@ -78,8 +80,10 @@ class filterDialog:
             entry = self.wTree.get_widget('spinbutton_fc')
             self.filter_opt['fc'] = entry.get_value()
             entry = self.wTree.get_widget('spinbutton_fh')
-            self.filter_opt['order'] = entry.get_value()
+            self.filter_opt['fh'] = entry.get_value()
             entry = self.wTree.get_widget('spinbutton_gain')
+            self.filter_opt['gain'] = entry.get_value()
+            entry = self.wTree.get_widget('spinbutton_order')
             self.filter_opt['order'] = entry.get_value()
 
             combobox = self.wTree.get_widget('combobox_wtype')
