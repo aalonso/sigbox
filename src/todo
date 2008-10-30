@@ -1,0 +1,20 @@
+Fixes:
+
+* Fix fft plot
+* Fix cepstrum plot
+
+Cepstrum: real(iftt(|H(w)|))
+
+Todo:
+* Suprimir bandas en dominio de frecuencia
+* Derivar de matplotlib para cargar la señal de inicio
+
+
+Enhacements:
+
+* On fft response mostrar primero la señal
+* Select input point
+* Print figures
+
+
+
