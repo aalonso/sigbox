@@ -11,7 +11,7 @@
 
 import sys
 try:
-    from gnuradio import gr
+    #from gnuradio import gr
     from scipy.signal import *
     from pylab import *
 except:

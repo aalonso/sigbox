@@ -21,6 +21,7 @@ from freqs_dialog import *
 from common_utils import *
 from signal_utils import *
 from graphic import *
+from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as NavigationToolbar
 
 class sigBox:
     """SigBox main class"""
@@ -29,7 +30,7 @@ class sigBox:
         #self.window = "window_main"
         self.wTree = gtk.glade.XML(self.gladefile, "window_main")
         self.dialog = None
-
+        
         self.config = Config()
         self.glob_opt = self.config.getConfig('glob_opt')
         self.config = None
@@ -52,10 +53,13 @@ class sigBox:
    	    "on_about_activate"				: self.on_menu_about,
    	    "on_toolbutton_open_clicked"	: self.on_toolbutton_open,
         "on_toolbutton_clear_clicked"   : self.on_toolbutton_clear,
-        "on_toolbutton_execute_clicked"	: self.on_toolbutton_execute    
+        "on_toolbutton_select_toggled"  : self.on_toolbutton_select,
+        "on_toolbutton_execute_clicked"	: self.on_toolbutton_execute,
+        "on_notebook_switch_page"       : self.on_notebook_switch_page,
    		}
 		
         self.wTree.signal_autoconnect(dic)
+        self.window = self.wTree.get_widget("window_main")
         
         self.signal_graph = Graphic(self.wTree.get_widget('vbox_signal'))
         self.fft_graph = Graphic(self.wTree.get_widget('vbox_fft'))
@@ -77,8 +81,18 @@ class sigBox:
         self.ceps_graph.axes.set_title('Cepstrum')
         self.ceps_graph.axes.set_xlabel('Time')
         self.ceps_graph.axes.set_ylabel('Amplitude')
+ 
+        # Set Matplotlib toolbar
+        self.vbox_toolbar = self.wTree.get_widget('vbox_toolbar')
+        self.toolbar = NavigationToolbar(self.signal_graph.canvas, self.window)
+        self.vbox_toolbar.pack_start(self.toolbar, False, False)
 
-        self.wTree.get_widget("window_main").show_all()
+        # Signal properties
+        self.fs = None
+        self.n = None
+        
+        self.notebook = self.wTree.get_widget("notebook")
+        self.window.show_all()
 
     def on_sigbox_destroy(self, widget):
     	"""" sigbox destroy """
@@ -87,6 +101,32 @@ class sigBox:
         self.ifft_graph.destroy()
         self.ceps_graph.destroy()
     	gtk.main_quit ()
+
+    def on_notebook_change_current_page(self, widget):
+        print widget
+        print "current changed"
+
+    def on_notebook_select_page(self, widget):
+        print widget
+        print "select page"
+
+    def on_notebook_switch_page(self, widget, data, page):
+        # Remove current toolbar
+        self.vbox_toolbar.remove(self.toolbar)
+        # Add toolbar for selected page
+        if page == 0:
+            self.toolbar = NavigationToolbar(self.signal_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+        elif page == 1:
+            self.toolbar = NavigationToolbar(self.fft_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+        elif page == 2:
+            self.toolbar = NavigationToolbar(self.ifft_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+        elif page == 3:
+            self.toolbar = NavigationToolbar(self.ceps_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+
 
     def on_menu_file_new(self, widget):
     	""" File new selected """ 
@@ -141,23 +181,50 @@ class sigBox:
         self.dialog.run()
         
         if self.dialog.file:
-            self.signal_graph.axes.clear()
             y, fs, bits = wavread(self.dialog.file)
-            Fs = 'Fs = %d' %(fs)
-            fs = float(fs)
-            time = len(y)/fs
-            t = r_[0:time:1/fs]
+            #Fs = 'Fs = %d' %(fs)
+            self.fs = float(fs)
+            time = len(y)/self.fs
+            t = r_[0:time:1/self.fs]
+            self.n = len(t)
         
             self.signal_graph.axes.plot(t, y)
             self.signal_graph.axes.draw()
-            show()
+            #show()
 
         self.dialog = None
 	
     def on_toolbutton_clear(self, widget):
     	""" Toolbutton clear clicked """ 
-        
+        self.signal_graph.figure.clear()
+        self.fft_graph.figure.clear()
+        self.ifft_graph.figure.clear()
+        self.ceps_graph.figure.clear()
 
+    def on_toolbutton_select(self, widget):
+        """Toolbutton select clicked"""
+        if self.notebook.get_current_page() == 0:
+            toggled= widget.get_active()
+            if toggled:
+                self.signal_graph.enable_span()
+                xmin, xmax = self.signal_graph.axes.get_xlim()
+                t = r_[xmin:xmax:1/self.fs]
+                n = len(t)
+                print 'segment n = %d' %(n)
+                self.config = Config()
+                opt = self.config.getConfig('freq_opt')
+
+                if opt['seg_n'] != n:
+                    opt['seg_n'] = n
+                    if opt['seg_m'] > n:
+                        opt['seg_m'] = n
+                    
+                    self.config.updateConfig('freq_opt', opt)
+                    self.config.writeConfig()
+                
+                self.config = None
+
+            
     def on_toolbutton_execute(self, widget):
     	""" Toolbutton exceute clicked """
         # Load user options
@@ -189,7 +256,7 @@ class sigBox:
             #cepstrum(options)
         
         # Display graphics
-        show()
+        #show()
         # Unref options
         self.config = None
        
@@ -223,8 +290,8 @@ def main(argv):
     #options = parse_options(argv)
 	
     #if not options:		
-	sigbox = sigBox()
-	gtk.main()
+    sigbox = sigBox()
+    gtk.main()
 	
 
 if __name__ == "__main__":

@@ -1,21 +1,26 @@
-Fixes:
-
-* Fix fft plot
-* Fix cepstrum plot
-
-Cepstrum: real(iftt(|H(w)|))
-
 Todo:
-* Suprimir bandas en dominio de frecuencia
-* Derivar de matplotlib para cargar la señal de inicio
-* Merge cepstrum functionality, display cepstrum for imput file
+
+* Suprimir bandas de frecuencia
+* Seleccionar input point al presentar un archivo de audio
+  este input point servira como referencia de inicio de analisis
+* On fft response mostrar primero la señal de entrada
+* On 'setup.py' script add dependenc checks.
+* Test 'setup.py' scripts in Linux and Win machines
+* Add option to save figures
+* Remove GnuRadio dependency, use scipy fir functions.
+* On "View" menu add the items "Signal", "Freq response", "Ifft response"
+  "Cepstrum" create methods that when clicked switch the current page.
+* On Design menu remove the "Cepstrum" item.
+* On select button toggled activate the marker cursor to be able to select
+  a zone of analysis. This should work only in the signal graph.
 
 
-Enhacements:
+Open bugs:
 
-* On fft response mostrar primero la señal
-* Select input point
-* Print figures
+* Fix plots, al realizar un calculo las graficas resultantes se
+  estan sobreponiendo.
+* Fix scales, al grafcar una señal los ejes se sobreponen si es que
+  existe un grafico previo
 
 
 

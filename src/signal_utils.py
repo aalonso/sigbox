@@ -13,7 +13,7 @@
 import sys
 from common_utils import *
 try:
-    #from numpy import *
+    from numpy import zeros, linspace
     from scipy.signal import *
     from scipy.fftpack import *
     from scipy import *
@@ -35,7 +35,7 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
         n = options['seg_n']
         m = options['seg_m']
         
-        if  m == n and n < N:           # Trunk vectors
+        if  n < N:           # Trunk vectors
             t = t[:n]
             y = y[:n]
         elif m < n and m < N:
@@ -45,9 +45,10 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
         else:
             n = N
         
-        Y = fft(y, int(n))
+        Y = fft(y, int(n/2))
         f = (fs/n)*r_[0:n]
-
+        #freq = linspace(0., fs/2, num=n/2)
+        #times = linspace(0., float(n/fs), num=n)
         #xlabel('Time (sec)'); ylabel('Amplitude');     
         #title('Original signal'); plot(t, y)
         #savefig('../data/orig_sig.png')
