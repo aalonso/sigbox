@@ -26,7 +26,7 @@ from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as Navig
 class sigBox:
     """SigBox main class"""
     def __init__(self):
-        self.gladefile = "../data/sigbox.glade"
+        self.gladefile = "sigbox.glade"
         #self.window = "window_main"
         self.wTree = gtk.glade.XML(self.gladefile, "window_main")
         self.dialog = None
@@ -61,6 +61,28 @@ class sigBox:
         self.wTree.signal_autoconnect(dic)
         self.window = self.wTree.get_widget("window_main")
         
+        self.signal_graph = None
+        self.fft_graph = None
+        self.ifft_graph = None
+        self.ceps_graph = None
+
+        self._figures_init()
+        
+        # Set Matplotlib toolbar
+        self.vbox_toolbar = self.wTree.get_widget('vbox_toolbar')
+        self.toolbar = NavigationToolbar(self.signal_graph.canvas, self.window)
+        self.vbox_toolbar.pack_start(self.toolbar, False, False)
+
+        # Signal properties
+        self.file = None
+        self.fs = None
+        self.n = None
+        
+        self.notebook = self.wTree.get_widget("notebook")
+        self.window.show_all()
+
+    def _figures_init(self):
+        """ Initialize plot figures """
         self.signal_graph = Graphic(self.wTree.get_widget('vbox_signal'))
         self.fft_graph = Graphic(self.wTree.get_widget('vbox_fft'))
         self.ifft_graph = Graphic(self.wTree.get_widget('vbox_ifft'))
@@ -70,29 +92,17 @@ class sigBox:
         self.signal_graph.axes.set_ylabel('Amplitude')
         self.signal_graph.axes.set_title('Signal')
         
-        self.fft_graph.axes.set_title('Frequency Response')
-        self.fft_graph.axes.set_xlabel('f(Hz)')
+        self.fft_graph.axes.set_xlabel('Time')
         self.fft_graph.axes.set_ylabel('Amplitude')
-
+        self.fft_graph.axes.set_title('Signal')
+       
         self.ifft_graph.axes.set_title('Ifft')
         self.ifft_graph.axes.set_xlabel('Time')
         self.ifft_graph.axes.set_ylabel('Amplitude')
-
+        
         self.ceps_graph.axes.set_title('Cepstrum')
         self.ceps_graph.axes.set_xlabel('Time')
         self.ceps_graph.axes.set_ylabel('Amplitude')
- 
-        # Set Matplotlib toolbar
-        self.vbox_toolbar = self.wTree.get_widget('vbox_toolbar')
-        self.toolbar = NavigationToolbar(self.signal_graph.canvas, self.window)
-        self.vbox_toolbar.pack_start(self.toolbar, False, False)
-
-        # Signal properties
-        self.fs = None
-        self.n = None
-        
-        self.notebook = self.wTree.get_widget("notebook")
-        self.window.show_all()
 
     def on_sigbox_destroy(self, widget):
     	"""" sigbox destroy """
@@ -181,6 +191,7 @@ class sigBox:
         self.dialog.run()
         
         if self.dialog.file:
+            self.file = self.dialog.file
             y, fs, bits = wavread(self.dialog.file)
             #Fs = 'Fs = %d' %(fs)
             self.fs = float(fs)
@@ -188,43 +199,51 @@ class sigBox:
             t = r_[0:time:1/self.fs]
             self.n = len(t)
         
-            self.signal_graph.axes.plot(t, y)
-            self.signal_graph.axes.draw()
-            #show()
+            print 'segment n = %d' %(self.n)
+            self.signal_graph.plot(t, y)
+            
+            self.config = Config()
+            opt = self.config.getConfig('freq_opt')
+            opt['seg_m'] = 0
+            opt['seg_n'] = self.n
+            # Update and save options
+            self.config.updateConfig('freq_opt', opt)
+            self.config.writeConfig()
+            self.config = None
 
         self.dialog = None
 	
     def on_toolbutton_clear(self, widget):
     	""" Toolbutton clear clicked """ 
-        self.signal_graph.figure.clear()
-        self.fft_graph.figure.clear()
-        self.ifft_graph.figure.clear()
-        self.ceps_graph.figure.clear()
 
     def on_toolbutton_select(self, widget):
         """Toolbutton select clicked"""
         if self.notebook.get_current_page() == 0:
             toggled= widget.get_active()
             if toggled:
-                self.signal_graph.enable_span()
-                xmin, xmax = self.signal_graph.axes.get_xlim()
-                t = r_[xmin:xmax:1/self.fs]
-                n = len(t)
-                print 'segment n = %d' %(n)
-                self.config = Config()
-                opt = self.config.getConfig('freq_opt')
-
-                if opt['seg_n'] != n:
+                if self.file:
+                    self.signal_graph.enable_span()
+            else:
+                if self.file:
+                    self.signal_graph.disable_span()
+                    xmin = self.signal_graph.lx_min
+                    xmax = self.signal_graph.lx_max
+                    m = int(xmin * self.fs)
+                    n = int(xmax * self.fs)
+                    #print 'segment m = %f' %(m)
+                    #print 'segment n = %f' %(n)
+                    #t = r_[xmin:xmax:1/self.fs]
+                    #n = len(t)
+                    #print 'segment n = %d' %(n)
+                    self.config = Config()
+                    opt = self.config.getConfig('freq_opt')
+                    opt['seg_m'] = m
                     opt['seg_n'] = n
-                    if opt['seg_m'] > n:
-                        opt['seg_m'] = n
-                    
+                    # Update and save options
                     self.config.updateConfig('freq_opt', opt)
                     self.config.writeConfig()
-                
-                self.config = None
+                    self.config = None
 
-            
     def on_toolbutton_execute(self, widget):
     	""" Toolbutton exceute clicked """
         # Load user options
@@ -236,17 +255,32 @@ class sigBox:
         if self.glob_opt['exec'] == 'FIR filter design':
             opt = self.config.getConfig('filter_opt')
             b = fir_design(options = opt)
-            filter_response(b, 1, graph = self.fft_graph)
+            filter_response(b, 1, graph = self.fft_graph) 
+            self.fft_graph.axes.set_xlabel('Frequency [Hz]')
+            self.fft_graph.axes.set_ylabel('Amplitude')
+            self.fft_graph.axes.set_title('FFT')
             #self.image_freq.set_from_file('../data/fir_resp.png')
         elif self.glob_opt['exec'] == 'IIR filter design':
             opt = self.config.getConfig('filter_opt')
             b, a = iir_design(options = opt)
             filter_response(b, a, graph = self.fft_graph)            
+            self.fft_graph.axes.set_xlabel('Frequency [Hz]')
+            self.fft_graph.axes.set_ylabel('Amplitude')
+            self.fft_graph.axes.set_title('FFT')
             #self.image_freq.set_from_file('../data/fir_resp.png')
         elif self.glob_opt['exec'] == 'Frecuency response':
             options = self.config.getConfig('freq_opt')
             fft_sig(options, graph_fft = self.fft_graph, graph_ifft = self.ifft_graph)
+            self.fft_graph.axes.set_xlabel('Frequency [Hz]')
+            self.fft_graph.axes.set_ylabel('Amplitude')
+            self.fft_graph.axes.set_title('FFT')
+            self.ifft_graph.axes.set_xlabel('Time')
+            self.ifft_graph.axes.set_ylabel('Amplitude')
+            self.ifft_graph.axes.set_title('Inverse FFT')
             cepstrum(options, graph_ceps = self.ceps_graph)
+            self.ceps_graph.axes.set_xlabel('Time')
+            self.ceps_graph.axes.set_ylabel('Amplitude')
+            self.ceps_graph.axes.set_title('Cepstrum')
             #self.image_freq.set_from_file('../data/fft_sig.png')
             #self.image_time.set_from_file('../data/orig_sig.png')
             #self.image_ifft.set_from_file('../data/ifft_sig.png')
@@ -258,9 +292,7 @@ class sigBox:
         # Display graphics
         #show()
         # Unref options
-        self.config = None
-       
-         
+        self.config = None 
 
 def parse_options(argv):
 	"""Command line interface, parse user options"""
@@ -294,7 +326,7 @@ def main(argv):
     gtk.main()
 	
 
-if __name__ == "__main__":
-	sys.exit(main(sys.argv))
+#if __name__ == "__main__":
+#	sys.exit(main(sys.argv))
 
 

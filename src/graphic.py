@@ -18,12 +18,11 @@ except:
     pass
 try:
     import gtk
-    import gtk.glade
+    #import gtk.glade
 except:
     sys.exit(1)
 
 import matplotlib
-matplotlib.use('GTK')
 from pylab import *
 from matplotlib.figure import Figure
 #from matplotlib.axes import Subplot
@@ -36,18 +35,18 @@ class Graphic:
         self.figure = Figure(figsize=(4,3), dpi=64)
         self.axes = self.figure.add_subplot(111) 
         self.axes.grid(True)
-        #self.plot = ptl
+        self.widget = widget
         self.canvas = FigureCanvasGTK(self.figure)
         self.graphview = widget
         self.graphview.pack_start(self.canvas, True, True)
 
-        self.cursor = None
-        self.on_press_cb = None
-        self.on_release_cb = None
-        self.on_motion_cb = None
-        self.lx = None
-        self.ly = None
-        self.rec = None
+        #self.cursor = None
+        #self.on_press_cb = None
+        #self.on_release_cb = None
+        #self.on_motion_cb = None
+        self.lx_min = None
+        self.lx_max = None
+        #self.rec = None
         self.axes2 = None
         self.span = None
         
@@ -73,17 +72,43 @@ class Graphic:
         #button = Button(button_ax, 'Press Me')
         #button.on_clicked(self.on_button_clicked)
 
+    def plot(self, x, y):
+        self.axes.clear()
+        self.axes.plot(x, y)
+        self.axes.grid(True)
+        self.canvas.destroy()
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        self.widget.pack_start(self.canvas, True, True)
+
+    def semilogy(self, x, y):
+        self.axes.clear()
+        self.axes.grid(True)
+        self.axes.semilogy(x, y)
+        self.canvas.destroy()
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        self.widget.pack_start(self.canvas, True, True)
+
+    def clear_figure(self):
+        self.axes.clear()
+        self.canvas.destroy()
+        self.axes.grid(True)
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        self.widget.pack_start(self.canvas, True, True)
+
     def enable_span(self):
         #self.rec = RectangleSelector(self.axes, self.line_select_callback,
         #                            drawtype='box',useblit=True,
         #                            minspanx=5,minspany=5)
         # Unref original sublot
-        self.figure.clear()
-        self.axes = self.figure.add_subplot(211)
-        self.axes2 = self.figure.add_subplot(212)
-        self.span = SpanSelector(self.axes, self.onselect, 'horizontal', useblit=False,
-                                rectprops=dict(alpha=0.5, facecolor='red'))
-
+        #xmin, xmax = self.axes.get_xlim()
+        #self.lx_min = xmin
+        #self.lx_max = xmax
+        self.span = SpanSelector(self.axes, self.on_select, 'horizontal', useblit=False,
+                                rectprops=dict(alpha=0.5, facecolor='red'))       
+        self.span.visible = True
         #self.lx = self.axes.plot((0,0), (0,0), 'k-')
         #self.ly = self.axes.plot((0,0), (0,0), 'k-')
         #self.lx = Line2D([],[], 'k-')
@@ -97,23 +122,25 @@ class Graphic:
         #self.on_motion_cb = self.canvas.mpl_connect('motion_notify_event', self.on_motion)
         #self.canvas.show()
     
-    def onselect(self, xmin, xmax):
+    def on_select(self, xmin, xmax):
         #indmin, indmax = npy.searchsorted(x, (xmin, xmax))
         #indmax = min(len(x)-1, indmax)
-        print xmin
-        print xmax
+        #print xmin
+        #print xmax
         #thisx = x[indmin:indmax]
         #thisy = y[indmin:indmax]
         #self.figure.set_data(thisx, thisy)
-        self.axes2.set_xlim(xmin, xmax)
+        self.lx_min = xmin
+        self.lx_max = xmax
+        self.axes.set_xlim(xmin, xmax)
         #self.axes.set_ylim(thisy.min(), thisy.max())
         self.figure.canvas.draw()
 
-
     def disable_span(self):
-        self.on_press_cb = None
-        self.on_release_cb = None
-        self.on_motion_cb = None
+        self.span.visible = False
+        #self.on_press_cb = None
+        #self.on_release_cb = None
+        #self.on_motion_cb = None
 
 
     def line_select_callback(self, event1, event2):
@@ -123,41 +150,38 @@ class Graphic:
         print " The button you used were: ",event1.button, event2.button
 
     def destroy(self):
-        self.canvas.mpl_disconnect(self.on_press)
-        self.canvas.mpl_disconnect(self.on_release)
-        self.canvas.mpl_disconnect(self.on_motion)
+        self.canvas.destroy()
+        #self.canvas.mpl_disconnect(self.on_press)
+        #self.canvas.mpl_disconnect(self.on_release)
+        #self.canvas.mpl_disconnect(self.on_motion)
 
-#class Cursor:
-#    def __init__(self, ax):
-        #self.ax = ax
-    def on_press(self, event):
-        print 'x=%d y=%d' %(event.x, event.y)
-        print 'xdata=%d ydata=%d' %(event.xdata, event.ydata)        
+    #def on_press(self, event):
+    #    print 'x=%d y=%d' %(event.x, event.y)
+    #    print 'xdata=%d ydata=%d' %(event.xdata, event.ydata)        
 
-        #self.text = self.axes.text(0.7,0.9, '', transform=self.axes.transAxes)
+    #    self.text = self.axes.text(0.7,0.9, '', transform=self.axes.transAxes)
 
-    def on_release(self, event):
-        print 'x=%d y=%d' %(event.x, event.y)
-        print 'xdata=%d ydata=%d' %(event.xdata, event.ydata)
+    #def on_release(self, event):
+    #    print 'x=%d y=%d' %(event.x, event.y)
+    #    print 'xdata=%d ydata=%d' %(event.xdata, event.ydata)
 
 
-    def on_motion(self, event):
-        if not event.inaxes: return
-        axes = event.inaxes
-        min_x, max_x = axes.get_xlim()
-        min_y, max_y = axes.get_ylim()
+    #def on_motion(self, event):
+    #    if not event.inaxes: return
+    #    axes = event.inaxes
+    #    min_x, max_x = axes.get_xlim()
+    #    min_y, max_y = axes.get_ylim()
 
-        x, y = event.xdata, event.ydata
-        print self.lx
-        print self.ly
+    #    x, y = event.xdata, event.ydata
+    #    print self.lx
+    #    print self.ly
         # Update line position
-        self.lx.set_data((min_x, max_x), (y, y))
-        self.ly.set_data((x, x), (min_y, max_y))
+    #    self.lx.set_data((min_x, max_x), (y, y))
+    #    self.ly.set_data((x, x), (min_y, max_y))
         #self.text.set_text('x=%1.2f, y=%1.2f'%(x,y))
-        print 'x=%1.2f, y=%1.2f'%(x,y)
-        self.figure.canvas.draw()
+    #    print 'x=%1.2f, y=%1.2f'%(x,y)
+    #    self.figure.canvas.draw()
     
-
 class SnaptoCursor:
     def __init__(self, axes, x, y):
         self.axes = axes
@@ -202,11 +226,11 @@ class SelectBox:
         print "(%3.2f, %3.2f) --> (%3.2f, %3.2f)"%(x,y,x1,y1)
     
 
-if __name__ == "__main__":
-    gladefile = "../data/sigbox.glade"
-    wTree = gtk.glade.XML(gladefile, "window_main")
-    signal_graph = wTree.get_widget('vbox_signal')
+#if __name__ == "__main__":
+#    gladefile = "../data/sigbox.glade"
+#    wTree = gtk.glade.XML(gladefile, "window_main")
+#    signal_graph = wTree.get_widget('vbox_signal')
 
-    graph = Graphic(signal_graph)
-    cursor = Cursor(graph.axes)
-    show()
+#    graph = Graphic(signal_graph)
+#    cursor = Cursor(graph.axes)
+#    show()

@@ -12,6 +12,7 @@
 
 import sys
 from common_utils import *
+from graphic import *
 try:
     from numpy import zeros, linspace
     from scipy.signal import *
@@ -35,17 +36,14 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
         n = options['seg_n']
         m = options['seg_m']
         
-        if  n < N:           # Trunk vectors
-            t = t[:n]
-            y = y[:n]
-        elif m < n and m < N:
-            t = t[:m]
-            y = y[:m]
-            n = m
+        if m < n and n < N:
+            t = t[m:n]
+            y = y[m:n]
+            n = n -m
         else:
             n = N
         
-        Y = fft(y, int(n/2))
+        Y = fft(y, n=int(n))
         f = (fs/n)*r_[0:n]
         #freq = linspace(0., fs/2, num=n/2)
         #times = linspace(0., float(n/fs), num=n)
@@ -54,12 +52,13 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
         #savefig('../data/orig_sig.png')
 
         if options['apply_ifft'] == True:
-            ys = ifft(Y)
+            ys = ifft(Y, n = n)
             #graph_ifft.axes.clear()
             #graph_ifft.axes.grid(True)
             #graph_ifft.axes.axis([0,n,0,max(ys)])
-            graph_ifft.axes.plot(t, ys)
-            graph_ifft.axes.draw()
+            #graph_ifft.axes.plot(t, ys)
+            #graph_ifft.axes.draw()
+            graph_ifft.plot(t, ys[0:n])
 
         #graph_fft.axes.clear()
         #graph_fft.axes.grid(True)
@@ -70,23 +69,23 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
 
             if options['linear'] == 'True':
                 #graph_fft.axes.axis([0,n,0,max(abs(Yw))])
-                graph_fft.axes.plot(f[int(n/2):], abs(Yw[int(n/2):]))
+                graph_fft.plot(f[int(n/2):], abs(Yw[int(n/2):]))
                 #savefig('../data/fft_sig.png')
             else:
                 #graph_fft.axes.axis([0,n,0,log(max(abs(Y)))])
-                graph_fft.axes.semilogy(f[int(n/2):], abs(Yw[int(n/2):]))
+                graph_fft.semilogy(f[int(n/2):], abs(Yw[int(n/2):]))
                 #savefig('../data/fft_sig.png')                        
         else:
             if options['linear'] == 'True':
                 #graph_fft.axes.axis([0,n,0,max(abs(Y))])
-                graph_fft.axes.plot(f[int(n/2):], abs(Y[int(n/2):]))
+                graph_fft.plot(f[int(n/2):], abs(Y[int(n/2):]))
                 #savefig('../data/fft_sig.png')
             else: 
                 #graph_fft.axes.axis([0,n,0,log(max(abs(Y)))])
-                graph_fft.axes.semilogy(f[int(n/2):], abs(Y[int(n/2):]))
+                graph_fft.semilogy(f[int(n/2):], abs(Y[int(n/2):]))
                 #savefig('../data/fft_sig.png')
 
-        graph_fft.axes.draw()
+        #graph_fft.axes.draw()
 
         
 def cepstrum(options = {}, graph_ceps = None):
@@ -101,30 +100,28 @@ def cepstrum(options = {}, graph_ceps = None):
         n = options['seg_n']
         m = options['seg_m']
         
-        if  m == n and n < N:           # Trunk vectors
-            y = y[:n]
-        elif m < n and m < N:
-            y = y[:m]
-            n = m
+        if  m < n and n < N:           # Trunk vectors
+            y = y[m:n]
+            n = n -m
         else:
             n = N
         
-        Y = fft(y, int(n))
+        Y = fft(y, n = int(n))
         f = (fs/n)*r_[0:n]
     
-        Ys = real(ifft(log(abs(Y)))) 
+        Ys = real(ifft(log(abs(Y)), n = int(n)))
         
         #graph_ceps.axes.clear()
         #graph_ceps.axes.grid(True)
          
         if options['linear'] == 'True':
-            graph_ceps.axes.plot(f, Ys[0:n], 'r')
+            graph_ceps.plot(f, Ys[0:n])
             #savefig('../data/ceps_sig.png')
         else:            
-            graph_ceps.axes.semilogy(f, Ys[0:n], 'r')
+            graph_ceps.semilogy(f, Ys[0:n])
             #savefig('../data/ceps_sig.png')
 
-        graph_ceps.axes.draw()
+        #graph_ceps.axes.draw()
 
 
 #def impulse_response(t):

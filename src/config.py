@@ -34,7 +34,7 @@ class Config:
                     'iirftype' : 'Butterworth',
                 },
                 'freq_opt' : {
-                    'file' : '../data/aaah.wav',
+                    'file' : 'aaah.wav',
                     'seg_n' : 8192,
                     'seg_m' : 8192,
                     'rm_freqs' : 0,

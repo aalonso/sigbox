@@ -18,7 +18,7 @@ Todo:
 Open bugs:
 
 * Fix plots, al realizar un calculo las graficas resultantes se
-  estan sobreponiendo.
+  sobrepone.
 * Fix scales, al grafcar una señal los ejes se sobreponen si es que
   existe un grafico previo
 

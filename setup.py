@@ -9,32 +9,34 @@
 # (at your option) any later version.
 #
 
-from disutils.core import setup
+from distutils.core import setup
 
-setup ( name = 'Sigbox',
+setup ( name = 'sigbox',
         version = '0.0.1',
         author = 'Adrian Alonso',
         author_email = 'aalonso00@gmail.com',
         url = 'http://aalonso.wordpress.com',
-        download_url = 'git://github.com/aalonso/sigbox.git'
+        license = "GPLv2",
+        plataforms = ['any'],
+        download_url = 'git://github.com/aalonso/sigbox.git',
         description = 'A simple tool for digital filter design',
+        package_dir = {'sigbox': 'src'},
         packages = ['sigbox'],
-        py_modules = [  'src/about_dialog',
-                        'src/common_utils',
-                        'src/config',
-                        'src/fast_conv',
-                        'src/filechooser_dialog',
-                        'src/filter_design',
-                        'src/filter_dialog',
-                        'src/freqs_dialog',
-                        'src/graphic',
-                        'src/sigbox',
-                        'src/signal_utils'
-                        ]
-        data_files = [  ('lib/sigbox', ['data/sigbox.glade']),
-                        ('lib/sigbox', ['src/config.yaml']),
-                        ('share/sigbox'), ['data/aaah.wav']),
-                        ('share/doc/sigbox', ['doc/sigbox.odp'])
-                        ]
+        #package_data = {'sigbox': ['data/sigbox.glade']},
+        #py_modules = [  'about_dialog',
+        #                'common_utils',
+        #                'config',
+        #                'filechooser_dialog',
+        #                'filter_design',
+        #                'filter_dialog',
+        #                'fir2',
+        #                'freqs_dialog',
+        #                'graphic',
+        #                'sigbox',
+        #                'signal_utils',
+        #                ],
+        data_files = [  ('lib/sigbox', ['data/sigbox.glade', 'src/config.yaml']),
+                        ('share/sigbox', ['data/aaah.wav']),
+                        ],
         )
         

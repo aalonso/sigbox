@@ -138,8 +138,7 @@ def iir_design(options = {}):
         if options['order'] == 0:
             #Minimal order filter
             ws = wp + 0.1
-            b, a = iirdesign(wp, ws, gpass = 20, gstop = 1,
-                            ftype = iirtype)
+            b, a = iirdesign(wp, ws, ftype = iirtype)
         else:
             b, a = iirfilter(options['order'], wp, btype = 'lowpass', ftype = iirtype)
 
@@ -147,8 +146,7 @@ def iir_design(options = {}):
     elif options['ftype'] == 'High pass':
         if options['order'] == 0:
             ws = wp - 0.1
-            b, a = iirdesign(wp, ws, gpass = 30, gstop = 5,
-                            ftype = iirtype)
+            b, a = iirdesign(wp, ws, ftype = iirtype)
         else:
             b, a = iirfilter(options['order'], wp, btype = 'highpass', ftype = iirtype)
 
@@ -158,8 +156,7 @@ def iir_design(options = {}):
         Wp = [wp, wph]
         if options['order'] == 0:
             Ws = [(wp-0.1), (wph+0.1)]
-            b, a = iirdesign(Wp, Ws, gpass = 1, gstop = 10,
-                            ftype = iirtype)
+            b, a = iirdesign(Wp, Ws, ftype = iirtype)
         else:
             b, a = iirfilter(options['order'], Wp, btype = 'bandpass', ftype = iirtype)
 
@@ -169,8 +166,7 @@ def iir_design(options = {}):
         Wp = [wp, wph]
         if options['order'] == 0:
             Ws = [(wp+0.1), (wph-0.1)]
-            b, a = iirdesign(Wp, Ws, gpass = 30, gstop = 5,
-                            ftype = iirtype)
+            b, a = iirdesign(Wp, Ws, ftype = iirtype)
         else:
             b, a = iirfilter(options['order'], Wp, btype = 'bandstop', ftype = iirtype)
         return (b, a)
@@ -183,8 +179,8 @@ def filter_response(b, a, n=512, graph = None):
     [w, h] = freqz(b, a, worN =n)
     #graph.axes.clear()
     #graph.axes.grid()
-    graph.axes.semilogy(w/pi, abs(h))
-    graph.axes.draw()
+    graph.semilogy(w/pi, abs(h))
+    #graph.axes.draw()
     
     #savefig('../data/fir_resp.png');
 

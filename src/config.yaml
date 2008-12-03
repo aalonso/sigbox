@@ -2,10 +2,10 @@ filter_opt:
   fc: 600.0
   fh: 800.0
   fs: 2200.0
-  ftype: Band reject
+  ftype: Low pass
   gain: 10.0
   iirftype: Butterworth
-  order: 60.0
+  order: 20.0
   win: Hamming
 freq_opt:
   apply_ifft: true
@@ -13,9 +13,9 @@ freq_opt:
   file: ../data/aaah.wav
   linear: true
   log: false
-  rm_freqs: 0
-  seg_m: 178
-  seg_n: 44100
+  rm_freqs: 20.0
+  seg_m: 8666
+  seg_n: 17059
   win: hamming
 glob_opt:
   exec: FIR filter design

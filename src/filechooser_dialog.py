@@ -16,7 +16,7 @@ class fileChooserDialog:
 
     def __init__ (self):
         #Set the Glade file
-        self.gladefile = "../data/sigbox.glade"
+        self.gladefile = "sigbox.glade"
         self.filename = ""
         self.wTree = gtk.glade.XML(self.gladefile, "filechooserdialog") 
         #Create our dictionay and connect it

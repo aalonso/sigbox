@@ -17,7 +17,7 @@ class aboutDialog:
 
     def __init__ (self):
         #Set the Glade file
-        self.gladefile = "../data/sigbox.glade"  
+        self.gladefile = "sigbox.glade"  
         self.wTree = gtk.glade.XML(self.gladefile, "aboutdialog") 
         #Create our dictionay and connect it
         #dic = {
