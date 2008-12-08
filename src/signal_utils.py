@@ -39,10 +39,11 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
         if m < n and n < N:
             t = t[m:n]
             y = y[m:n]
-            n = n -m
+            n = n - m
         else:
             n = N
         
+
         Y = fft(y, n=int(n))
         f = (fs/n)*r_[0:n]
         #freq = linspace(0., fs/2, num=n/2)
@@ -69,20 +70,20 @@ def fft_sig(options = {}, graph_ifft = None, graph_fft = None):
 
             if options['linear'] == 'True':
                 #graph_fft.axes.axis([0,n,0,max(abs(Yw))])
-                graph_fft.plot(f[int(n/2):], abs(Yw[int(n/2):]))
+                graph_fft.plot(f[0:int(n/2)], abs(Yw[0:int(n/2)]))
                 #savefig('../data/fft_sig.png')
             else:
                 #graph_fft.axes.axis([0,n,0,log(max(abs(Y)))])
-                graph_fft.semilogy(f[int(n/2):], abs(Yw[int(n/2):]))
+                graph_fft.semilogy(f[0:int(n/2)], abs(Yw[0:int(n/2)]))
                 #savefig('../data/fft_sig.png')                        
         else:
             if options['linear'] == 'True':
                 #graph_fft.axes.axis([0,n,0,max(abs(Y))])
-                graph_fft.plot(f[int(n/2):], abs(Y[int(n/2):]))
+                graph_fft.plot(f[0:int(n/2)], abs(Y[0:int(n/2)]))
                 #savefig('../data/fft_sig.png')
             else: 
                 #graph_fft.axes.axis([0,n,0,log(max(abs(Y)))])
-                graph_fft.semilogy(f[int(n/2):], abs(Y[int(n/2):]))
+                graph_fft.semilogy(f[0:int(n/2)], abs(Y[0:int(n/2)]))
                 #savefig('../data/fft_sig.png')
 
         #graph_fft.axes.draw()
@@ -94,8 +95,38 @@ def cepstrum(options = {}, graph_ceps = None):
         y, fs, bits = wavread(options['file'])
         
         fs = float(fs)
-        #time = len(y)/fs        #Calculate total time 
-        #t = r_[0:time:1/fs]     #Create time vector
+        time = len(y)/fs        #Calculate total time 
+        t = r_[0:time:1/fs]     #Create time vector
+        N = len(y)
+        n = options['seg_n']
+        m = options['seg_m']
+        
+        if  m < n and n < N:           # Trunk vectors
+            t = t[m:n]
+            y = y[m:n]
+            n = n -m
+        else:
+            n = N
+        
+        Y = fft(y, n = int(n))
+        #f = (fs/n)*r_[0:n]
+    
+        Ys = real(ifft(log(abs(Y)), n = int(n)))
+         
+        if options['linear'] == 'True':
+            graph_ceps.plot(t[0:n], Ys[0:n])
+            #savefig('../data/ceps_sig.png')
+        else:            
+            graph_ceps.semilogy(t[0:n], Ys[0:n])
+            #savefig('../data/ceps_sig.png')
+
+def power_spectrum(options = {}, graph_spec = None):
+    if options:
+        # Load wav file data
+        y, fs, bits = wavread(options['file'])
+        
+        fs = float(fs)
+        
         N = len(y)
         n = options['seg_n']
         m = options['seg_m']
@@ -106,24 +137,8 @@ def cepstrum(options = {}, graph_ceps = None):
         else:
             n = N
         
-        Y = fft(y, n = int(n))
-        f = (fs/n)*r_[0:n]
-    
-        Ys = real(ifft(log(abs(Y)), n = int(n)))
-        
-        #graph_ceps.axes.clear()
-        #graph_ceps.axes.grid(True)
-         
-        if options['linear'] == 'True':
-            graph_ceps.plot(f, Ys[0:n])
-            #savefig('../data/ceps_sig.png')
-        else:            
-            graph_ceps.semilogy(f, Ys[0:n])
-            #savefig('../data/ceps_sig.png')
+        if n%2:
+            n = n - n%2
+            y = y[0:n]
 
-        #graph_ceps.axes.draw()
-
-
-#def impulse_response(t):
-#    return (exp(-t) - exp(-5*t))*dt
-
+        graph_spec.power_spectrum(y,n,fs)

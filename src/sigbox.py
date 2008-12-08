@@ -48,12 +48,16 @@ class sigBox:
    	    "on_file_quit_activate"			: self.on_menu_file_quit,
         "on_filter-design_activate"     : self.on_menu_design_filter,
         "on_frec-response_activate"     : self.on_menu_design_frec_resp,
-        "on_cepstral-response_activate" : self.on_menu_design_cepstral,
-   	    "on_original_signal_activate"	: self.on_menu_orig_sig,
+   	    "on_signal_item_activate"	    : self.on_menu_signal_active,
+        "on_freq_item_activate"         : self.on_menu_freq_active,
+        "on_ifft_item_activate"         : self.on_menu_ifft_active,
+        "on_ceps_item_activate"         : self.on_menu_ceps_active,
+        "on_spec_item_activate"         : self.on_menu_spec_active,
    	    "on_about_activate"				: self.on_menu_about,
    	    "on_toolbutton_open_clicked"	: self.on_toolbutton_open,
         "on_toolbutton_clear_clicked"   : self.on_toolbutton_clear,
         "on_toolbutton_select_toggled"  : self.on_toolbutton_select,
+        "on_toolbutton_apply_clicked"   : self.on_toolbutton_apply,
         "on_toolbutton_execute_clicked"	: self.on_toolbutton_execute,
         "on_notebook_switch_page"       : self.on_notebook_switch_page,
    		}
@@ -65,6 +69,7 @@ class sigBox:
         self.fft_graph = None
         self.ifft_graph = None
         self.ceps_graph = None
+        self.spec_graph = None
 
         self._figures_init()
         
@@ -77,6 +82,7 @@ class sigBox:
         self.file = None
         self.fs = None
         self.n = None
+        self.filter = None
         
         self.notebook = self.wTree.get_widget("notebook")
         self.window.show_all()
@@ -87,29 +93,36 @@ class sigBox:
         self.fft_graph = Graphic(self.wTree.get_widget('vbox_fft'))
         self.ifft_graph = Graphic(self.wTree.get_widget('vbox_ifft'))
         self.ceps_graph = Graphic(self.wTree.get_widget('vbox_ceps'))
+        self.spec_graph = Graphic(self.wTree.get_widget('vbox_spec'))
         
-        self.signal_graph.axes.set_xlabel('Time')
+        self.signal_graph.axes.set_xlabel('Time [s]')
         self.signal_graph.axes.set_ylabel('Amplitude')
-        self.signal_graph.axes.set_title('Signal')
+        self.signal_graph.axes.set_title('Audio signal')
         
-        self.fft_graph.axes.set_xlabel('Time')
+        self.fft_graph.axes.set_xlabel('Frequency [Hz]')
         self.fft_graph.axes.set_ylabel('Amplitude')
-        self.fft_graph.axes.set_title('Signal')
+        self.fft_graph.axes.set_title('FFT')
        
         self.ifft_graph.axes.set_title('Ifft')
-        self.ifft_graph.axes.set_xlabel('Time')
+        self.ifft_graph.axes.set_xlabel('Time [s]')
         self.ifft_graph.axes.set_ylabel('Amplitude')
         
         self.ceps_graph.axes.set_title('Cepstrum')
-        self.ceps_graph.axes.set_xlabel('Time')
+        self.ceps_graph.axes.set_xlabel('Time [s]')
         self.ceps_graph.axes.set_ylabel('Amplitude')
+        
+        self.spec_graph.axes.set_title('Power spectrum')
+        self.spec_graph.axes.set_xlabel('Frequency [Hz]')
+        self.spec_graph.axes.set_ylabel('Amplitude')
 
+        
     def on_sigbox_destroy(self, widget):
     	"""" sigbox destroy """
         self.signal_graph.destroy()
         self.fft_graph.destroy()
         self.ifft_graph.destroy()
         self.ceps_graph.destroy()
+        self.spec_graph.destroy()
     	gtk.main_quit ()
 
     def on_notebook_change_current_page(self, widget):
@@ -135,6 +148,9 @@ class sigBox:
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
         elif page == 3:
             self.toolbar = NavigationToolbar(self.ceps_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+        elif page == 4:
+            self.toolbar = NavigationToolbar(self.spec_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
 
 
@@ -170,14 +186,26 @@ class sigBox:
         self.dialog.run()
         self.dialog = None
 
-    def on_menu_design_cepstral(self, widget):
-        """Cepstral response options"""
+    def on_menu_signal_active(self, widget):
+        """ Select signal view """
+        self.notebook.set_current_page(0)
 
-    def on_menu_prefs(self, widget):
-    	""" Menu preferences selected """
+    def on_menu_freq_active(self, widget):
+        """ Select frequency response view """
+        self.notebook.set_current_page(1)
 
-    def on_menu_orig_sig(self, widget):
-    	""" View original signal selected """
+    def on_menu_ifft_active(self, widget):
+        """ Select inverse fft response view """
+        self.notebook.set_current_page(2)
+
+    def on_menu_ceps_active(self, widget):
+        """ Select cepstrum response view """
+        self.notebook.set_current_page(3)
+
+    def on_menu_spec_active(self, widget):
+        """ Select power spectrum response view """
+        self.notebook.set_current_page(4)
+        
 
     def on_menu_about(self, widget):
     	""" Menu About selected """
@@ -201,13 +229,23 @@ class sigBox:
         
             print 'segment n = %d' %(self.n)
             self.signal_graph.plot(t, y)
-            
+            self.signal_graph.axes.set_xlabel('Time [s]')
+            self.signal_graph.axes.set_ylabel('Amplitude')
+            self.signal_graph.axes.set_title('Audio signal')
+
+            # Update user options
             self.config = Config()
             opt = self.config.getConfig('freq_opt')
             opt['seg_m'] = 0
             opt['seg_n'] = self.n
-            # Update and save options
+            opt['file'] = self.file
             self.config.updateConfig('freq_opt', opt)
+
+            opt = self.config.getConfig('filter_opt')
+            opt['fs'] = self.fs
+            self.config.updateConfig('filter_opt', opt)
+
+            # Save options
             self.config.writeConfig()
             self.config = None
 
@@ -215,6 +253,11 @@ class sigBox:
 	
     def on_toolbutton_clear(self, widget):
     	""" Toolbutton clear clicked """ 
+        self.signal_graph.clear_figure()
+        self.fft_graph.clear_figure()
+        self.ifft_graph.clear_figure()
+        self.ceps_graph.clear_figure()
+        self.spec_graph.clear_figure()
 
     def on_toolbutton_select(self, widget):
         """Toolbutton select clicked"""
@@ -230,19 +273,20 @@ class sigBox:
                     xmax = self.signal_graph.lx_max
                     m = int(xmin * self.fs)
                     n = int(xmax * self.fs)
-                    #print 'segment m = %f' %(m)
-                    #print 'segment n = %f' %(n)
-                    #t = r_[xmin:xmax:1/self.fs]
-                    #n = len(t)
-                    #print 'segment n = %d' %(n)
+                    
+                    # Update and save options
                     self.config = Config()
                     opt = self.config.getConfig('freq_opt')
                     opt['seg_m'] = m
                     opt['seg_n'] = n
-                    # Update and save options
-                    self.config.updateConfig('freq_opt', opt)
+                    self.config.updateConfig('freq_opt', opt)                    
                     self.config.writeConfig()
                     self.config = None
+
+    def on_toolbutton_apply(self, widget):
+        """ Toolbutton apply clicked """
+        if self.file:
+            print self.file
 
     def on_toolbutton_execute(self, widget):
     	""" Toolbutton exceute clicked """
@@ -255,42 +299,42 @@ class sigBox:
         if self.glob_opt['exec'] == 'FIR filter design':
             opt = self.config.getConfig('filter_opt')
             b = fir_design(options = opt)
-            filter_response(b, 1, graph = self.fft_graph) 
+            filter_response(b, 1, graph = self.fft_graph, fs = opt['fs']) 
             self.fft_graph.axes.set_xlabel('Frequency [Hz]')
             self.fft_graph.axes.set_ylabel('Amplitude')
-            self.fft_graph.axes.set_title('FFT')
-            #self.image_freq.set_from_file('../data/fir_resp.png')
+            self.fft_graph.axes.set_title('FIR response')
+            self.notebook.set_current_page(1)
         elif self.glob_opt['exec'] == 'IIR filter design':
             opt = self.config.getConfig('filter_opt')
             b, a = iir_design(options = opt)
-            filter_response(b, a, graph = self.fft_graph)            
+            filter_response(b, a, graph = self.fft_graph, fs = opt['fs'])            
             self.fft_graph.axes.set_xlabel('Frequency [Hz]')
             self.fft_graph.axes.set_ylabel('Amplitude')
-            self.fft_graph.axes.set_title('FFT')
-            #self.image_freq.set_from_file('../data/fir_resp.png')
+            self.fft_graph.axes.set_title('IIR response')
+            self.notebook.set_current_page(1)
         elif self.glob_opt['exec'] == 'Frecuency response':
+            # Get user options
             options = self.config.getConfig('freq_opt')
+            # fft and ifft
             fft_sig(options, graph_fft = self.fft_graph, graph_ifft = self.ifft_graph)
             self.fft_graph.axes.set_xlabel('Frequency [Hz]')
             self.fft_graph.axes.set_ylabel('Amplitude')
             self.fft_graph.axes.set_title('FFT')
-            self.ifft_graph.axes.set_xlabel('Time')
+            self.ifft_graph.axes.set_xlabel('Time [s]')
             self.ifft_graph.axes.set_ylabel('Amplitude')
             self.ifft_graph.axes.set_title('Inverse FFT')
+            # Cesptrum
             cepstrum(options, graph_ceps = self.ceps_graph)
-            self.ceps_graph.axes.set_xlabel('Time')
+            self.ceps_graph.axes.set_xlabel('Time [s]')
             self.ceps_graph.axes.set_ylabel('Amplitude')
             self.ceps_graph.axes.set_title('Cepstrum')
-            #self.image_freq.set_from_file('../data/fft_sig.png')
-            #self.image_time.set_from_file('../data/orig_sig.png')
-            #self.image_ifft.set_from_file('../data/ifft_sig.png')
-        #elif self.glob_opt['exec'] == 'Cepstral response':
-        #    options = self.config.getConfig('freq_opt')
-            #self.image_freq.set_from_file('../data/ceps_sig.png')
-            #cepstrum(options)
+            # Power spectrum
+            power_spectrum(options, graph_spec = self.spec_graph)
+            self.spec_graph.axes.set_xlabel('Frequency [Hz]')
+            self.spec_graph.axes.set_ylabel('Amplitude')
+            self.spec_graph.axes.set_title('Power spectrum')
+            self.notebook.set_current_page(1)
         
-        # Display graphics
-        #show()
         # Unref options
         self.config = None 
 

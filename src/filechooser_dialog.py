@@ -17,7 +17,7 @@ class fileChooserDialog:
     def __init__ (self):
         #Set the Glade file
         self.gladefile = "sigbox.glade"
-        self.filename = ""
+        self.file = ""
         self.wTree = gtk.glade.XML(self.gladefile, "filechooserdialog") 
         #Create our dictionay and connect it
         dic = { "on_filechooserdialog_file_activated"	: self.on_filechooser_file_activated,
@@ -39,9 +39,9 @@ class fileChooserDialog:
 
     def on_filechooser_file_activated(self, widget):
         """On file activeted """
-        self.filename = self.dialog.get_filename()
+        self.file = self.dialog.get_filename()
         print "File chooser activate"
-        print self.filename
+        print self.file
         self.dialog.destroy()
 
     def on_filechooser_response(self, widget, response):

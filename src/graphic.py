@@ -90,6 +90,16 @@ class Graphic:
         self.canvas.show()
         self.widget.pack_start(self.canvas, True, True)
 
+    def power_spectrum(self, x, n, fs):
+        self.axes.clear()
+        self.axes.grid(True)
+        self.axes.psd(x, NFFT = n, Fs = fs)
+        self.canvas.destroy()
+        self.canvas = FigureCanvasGTK(self.figure)
+        self.canvas.show()
+        self.widget.pack_start(self.canvas, True, True)
+        
+
     def clear_figure(self):
         self.axes.clear()
         self.canvas.destroy()

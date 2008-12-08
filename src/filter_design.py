@@ -76,7 +76,7 @@ def fir_design(options = {}):
             wh = (2*options['fh'])/fs
             f = [0,wp,wh,1]
             a = [0,1,1,0]
-            b = fir2(options['order'], options['fc'], options['gain'])
+            b = fir2(options['order'], f, a)
         return b
     elif options['ftype'] == 'Band reject':
         if options['order'] == 0:
@@ -172,15 +172,18 @@ def iir_design(options = {}):
         return (b, a)
         
 
-def filter_response(b, a, n=512, graph = None):
+def filter_response(b, a, n=512, graph = None, fs = 1):
     """ Generate filter response image
     """
     
-    [w, h] = freqz(b, a, worN =n)
-    #graph.axes.clear()
-    #graph.axes.grid()
-    graph.semilogy(w/pi, abs(h))
-    #graph.axes.draw()
+    [w, h] = freqz(b, a, worN = n)
+    n = len(h)
+    f = (fs/(2*n))*r_[0:n]
+
+    if fs == 1:
+        graph.semilogy(w/pi, abs(h))
+    else:
+        graph.semilogy(f, abs(h))
     
     #savefig('../data/fir_resp.png');
 
