@@ -1,21 +1,21 @@
 filter_opt:
-  fc: 800.0
-  fh: 1200.0
-  fs: 44100.0
-  ftype: Low pass
-  gain: 20.0
+  fc: 1500.0
+  fh: 2500.0
+  fs: 8000.0
+  ftype: Band reject
+  gain: 25.0
   iirftype: Butterworth
-  order: 20.0
+  order: 30.0
   win: Hamming
 freq_opt:
   apply_ifft: true
   apply_win: true
-  file: /home/aalonso/workspace/pds/sigbox-0.0.1/data/aaah.wav
+  file: /home/aalonso/workspace/pds/sigbox-0.0.1/data/aaah_8000.wav
   linear: false
   log: false
   rm_freqs: 0.0
-  seg_m: 0
-  seg_n: 35927
+  seg_m: 2147
+  seg_n: 2377
   win: hamming
 glob_opt:
   exec: FIR filter design

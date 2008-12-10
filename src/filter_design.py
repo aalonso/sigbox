@@ -13,13 +13,14 @@ import sys
 try:
     #from gnuradio import gr
     from scipy.signal import *
-    from pylab import *
+    #from pylab import *
 except:
     print 'libraries missing'
     sys.exit(1)
 
-from fir2 import *
+#from fir2 import *
 from graphic import *
+from common_utils import *
 
 def fir_design(options = {}):
     """ Fir design wrapper for gnuradio firdes funtion
@@ -37,70 +38,49 @@ def fir_design(options = {}):
                 win  : Window type
     """
 
-    #window = {
-    #    'Hamming' : gr.firdes.WIN_HAMMING,
-    #    'Black man' : gr.firdes.WIN_BLACKMAN,
-    #    'Hanning' : gr.firdes.WIN_HANN,
-    #    'Kaiser' : gr.firdes.WIN_KAISER,
-    #    'Rectangular' : gr.firdes.WIN_RECTANGULAR,
-    #}
+    _window = {
+        'Black man' : 'blackman',
+        'Box car' : 'boxcar',
+        'Hamming' : 'hamming',
+        'Hanning' : 'hanning',
+        'Triangular' : 'triang',
+    }
     # Get window type
-    #win = window[options['win']]
-
+    window = _window[options['win']]
+    win = get_window(window, options['order'])
     # Create frequency vector
-    fs = options['fs']
-    #f = r_[0:(fs/2)]
-    #n = len(f)
-    #print n
-    wp = (2*options['fc'])/fs
+    fs = float(options['fs'])
+    
+    wp = (2*options['fc'])/fs 
+    gain = 1
+    #gain = 20*log10(options['gain'])
 
     if options['ftype'] == 'Low pass':
-        if options['order'] == 0:
-            #b = gr.firdes.low_pass (options['gain'], fs,        
-            #                        options['fc'], 10, win)
-            b = remez(options['order'], options['fc'], options['gain'])
-        else:
-            f = [0,wp,wp+0.1,1]
-            a = [1,1,0,0]
-            b = fir2(options['order'], f, a)
-        return b
+        f = [0,wp,wp+0.1,1]
+        a = [1,1,0,0]
+        b = remez(options['order'], f, a[::2], Hz = 2)
+        #b = firwin(N = options['order'], cutoff = wp, window = window)
+        return (b*win*gain)
     elif options['ftype'] == 'Band pass':
-        if options['order'] == 0:
-            #b = gr.firdes.band_pass (options['gain'], fs,
-            #                         options['fc'], options['fh'],
-            #                         10, win)
-            #wh = (2*options['fh'])/fs
-            w = [options['fc'], options['fh']]
-            b = remez(options['order'], w, options['gain'])
-        else:
-            wh = (2*options['fh'])/fs
-            f = [0,wp,wh,1]
-            a = [0,1,1,0]
-            b = fir2(options['order'], f, a)
-        return b
+        wh = (2*options['fh'])/fs
+        f = [0,wp-0.1,wp,wh,wh+0.1,1]
+        a = [0,0,1,1,0,0]
+        b = remez(options['order'], f, a[::2], Hz = 2)
+        #b = fir2(options['order'], f, a)
+        return (b*win*gain)
     elif options['ftype'] == 'Band reject':
-        if options['order'] == 0:
-            #b = gr.firdes.band_reject (options['gain'], fs,
-            #                           options['fc'], options['fh'],
-            #                           10, win)
-            w = [options['fc'], options['fh']]
-            b = remez(options['order'], w, options['gain'])
-        else:
-            wh = (2*options['fh'])/fs
-            f = [0,wp,wh,1]
-            a = [1,0,0,1]
-            b = fir2(options['order'], f, a)
-        return b
+        wh = (2*options['fh'])/fs
+        f = [0,wp-0.1,wp,wh,wh+0.1,1]
+        a = [1,1,0,0,1,1]
+        b = remez(options['order'], f, a[::2], Hz = 2)
+        #b = fir2(options['order'], f, a)
+        return (b*win*gain)
     elif options['ftype'] == 'High pass':
-        if options['order'] == 0:
-            #b = gr.firdes.high_pass (options['gain'], fs,        
-            #                         options['fc'], 10, win)
-            b = remez(options['order'], options['fc'], options['gain'])
-        else:
-            f = [0,wp-0.1,wp,1]
-            a = [0,0,1,1]
-            b = fir2(options['order'], f, a)
-        return b
+        f = [0,wp-0.1,wp,1]
+        a = [0,0,1,1]
+        #b = fir2(options['order'], f, a)
+        b = remez(options['order'], f, a[::2], Hz = 2)
+        return (b*win*gain)
     else:
         return None
 
@@ -122,54 +102,36 @@ def iir_design(options = {}):
         
     """ 
     _ftype = {
-        'Bassel' : 'bessel',
+        'Bassel'      :  'bessel',
         'Butterworth' : 'butter',
         'Chebyshev 1' : 'cheby1',
         'Chebyshev 2' : 'cheby2',
-        'Elliptic' : 'ellip',
+        'Elliptic'    : 'ellip',
     }
 
     iirtype = _ftype[options['iirftype']]
 
     # Normalize cut off frecuencies
     wp = (2*options['fc'])/options['fs']
-    
+     
     if options['ftype'] == 'Low pass':
-        if options['order'] == 0:
-            #Minimal order filter
-            ws = wp + 0.1
-            b, a = iirdesign(wp, ws, ftype = iirtype)
-        else:
-            b, a = iirfilter(options['order'], wp, btype = 'lowpass', ftype = iirtype)
-
+        b, a = iirfilter(options['order'], wp, btype = 'lowpass', ftype = iirtype)
         return (b, a)
     elif options['ftype'] == 'High pass':
-        if options['order'] == 0:
-            ws = wp - 0.1
-            b, a = iirdesign(wp, ws, ftype = iirtype)
-        else:
-            b, a = iirfilter(options['order'], wp, btype = 'highpass', ftype = iirtype)
-
+        b, a = iirfilter(options['order'], wp, btype = 'highpass', ftype = iirtype)
         return (b, a)
     elif options['ftype'] == 'Band pass':
         wph = (2*options['fh'])/options['fs']
         Wp = [wp, wph]
-        if options['order'] == 0:
-            Ws = [(wp-0.1), (wph+0.1)]
-            b, a = iirdesign(Wp, Ws, ftype = iirtype)
-        else:
-            b, a = iirfilter(options['order'], Wp, btype = 'bandpass', ftype = iirtype)
-
+        b, a = iirfilter(options['order'], Wp, btype = 'bandpass', ftype = iirtype)
         return (b, a)
     elif options['ftype'] == 'Band reject':
         wph = (2*options['fh'])/options['fs']
         Wp = [wp, wph]
-        if options['order'] == 0:
-            Ws = [(wp+0.1), (wph-0.1)]
-            b, a = iirdesign(Wp, Ws, ftype = iirtype)
-        else:
-            b, a = iirfilter(options['order'], Wp, btype = 'bandstop', ftype = iirtype)
+        b, a = iirfilter(options['order'], Wp, btype = 'bandstop', ftype = iirtype)
         return (b, a)
+    else:
+        return None
         
 
 def filter_response(b, a, n=512, graph = None, fs = 1):
@@ -181,11 +143,45 @@ def filter_response(b, a, n=512, graph = None, fs = 1):
     f = (fs/(2*n))*r_[0:n]
 
     if fs == 1:
-        graph.semilogy(w/pi, abs(h))
+        graph.plot(w/pi, abs(h))
     else:
         graph.semilogy(f, abs(h))
+        #graph.plot(f, 20.0*log10(abs(h)))
     
     #savefig('../data/fir_resp.png');
+
+
+def filter_apply(b, a, graph = None, options = {}):
+    # Apply filter
+    
+    if graph and options:
+        y, fs, bits = wavread(options['file'])
+
+        fs = float(fs)
+        time = len(y)/fs        #Calculate total time 
+        t = r_[0:time:1/fs]     #Create time vector
+        
+        N = len(y)
+
+        n = options['seg_n']
+        m = options['seg_m']
+     
+        if m < n and n < N:
+            y = y[m:n]
+            t = t[m:n]
+            n = n - m
+        else:
+            n = N
+        #r = lfilter(b, a, y)
+        #r = convolve(b, y)
+        r = correlate(b, y)
+
+        Y = fft(r, n = int(n))
+        f = (fs/n)*r_[0:n]
+
+        graph.plot(f[0:int(n/2)], Y[0:int(n/2)])
+        #graph.semilogy(t, r[0:n])
+
 
 
 #if __name__ == '__main__':

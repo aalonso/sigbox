@@ -38,7 +38,7 @@ def wavread( name ):
 		print "Error. Sorry, this wavread function only supports 8 or 16 bits wav files."
 		return -1, -1, -1
 	file.close()
-	print "Fs: ",Fs,"\nBits: ",Bits,"\nChannels: ",Channels
+	#print "Fs: ",Fs,"\nBits: ",Bits,"\nChannels: ",Channels
 	return Data, Fs, Bits
 
 # Example: wavwrite( y, Fs, filename )
@@ -95,7 +95,7 @@ def wavwrite8bits( data_array, Fs, name ):
 				n += 1
 		file.writeframes( frame )
 	if clipped == True : print "Warning: Some values were clipped"
-	print "Final length:", len_data_array/512,"kb" # n*2/1024 (bytes size/1024) = n/512
+	#print "Final length:", len_data_array/512,"kb" # n*2/1024 (bytes size/1024) = n/512
 	file.close()
 
 def combobox_set_active_from_pattern(combobox, pattern):

@@ -49,6 +49,7 @@ class sigBox:
         "on_filter-design_activate"     : self.on_menu_design_filter,
         "on_frec-response_activate"     : self.on_menu_design_frec_resp,
    	    "on_signal_item_activate"	    : self.on_menu_signal_active,
+        "on_fir_item_activate"          : self.on_menu_filter_active,
         "on_freq_item_activate"         : self.on_menu_freq_active,
         "on_ifft_item_activate"         : self.on_menu_ifft_active,
         "on_ceps_item_activate"         : self.on_menu_ceps_active,
@@ -90,6 +91,7 @@ class sigBox:
     def _figures_init(self):
         """ Initialize plot figures """
         self.signal_graph = Graphic(self.wTree.get_widget('vbox_signal'))
+        self.filter_graph = Graphic(self.wTree.get_widget('vbox_filter'))
         self.fft_graph = Graphic(self.wTree.get_widget('vbox_fft'))
         self.ifft_graph = Graphic(self.wTree.get_widget('vbox_ifft'))
         self.ceps_graph = Graphic(self.wTree.get_widget('vbox_ceps'))
@@ -99,9 +101,13 @@ class sigBox:
         self.signal_graph.axes.set_ylabel('Amplitude')
         self.signal_graph.axes.set_title('Audio signal')
         
+        self.filter_graph.axes.set_xlabel('Frequency [Hz]')
+        self.filter_graph.axes.set_ylabel('Amplitude')
+        self.filter_graph.axes.set_title('Filter response')
+        
         self.fft_graph.axes.set_xlabel('Frequency [Hz]')
         self.fft_graph.axes.set_ylabel('Amplitude')
-        self.fft_graph.axes.set_title('FFT')
+        self.fft_graph.axes.set_title('Frequency response')
        
         self.ifft_graph.axes.set_title('Ifft')
         self.ifft_graph.axes.set_xlabel('Time [s]')
@@ -119,6 +125,7 @@ class sigBox:
     def on_sigbox_destroy(self, widget):
     	"""" sigbox destroy """
         self.signal_graph.destroy()
+        self.filter_graph.destroy()
         self.fft_graph.destroy()
         self.ifft_graph.destroy()
         self.ceps_graph.destroy()
@@ -141,15 +148,18 @@ class sigBox:
             self.toolbar = NavigationToolbar(self.signal_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
         elif page == 1:
-            self.toolbar = NavigationToolbar(self.fft_graph.canvas, self.window)
+            self.toolbar = NavigationToolbar(self.filter_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
         elif page == 2:
-            self.toolbar = NavigationToolbar(self.ifft_graph.canvas, self.window)
+            self.toolbar = NavigationToolbar(self.fft_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
         elif page == 3:
-            self.toolbar = NavigationToolbar(self.ceps_graph.canvas, self.window)
+            self.toolbar = NavigationToolbar(self.ifft_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
         elif page == 4:
+            self.toolbar = NavigationToolbar(self.ceps_graph.canvas, self.window)
+            self.vbox_toolbar.pack_start(self.toolbar, False, False)
+        elif page == 5:
             self.toolbar = NavigationToolbar(self.spec_graph.canvas, self.window)
             self.vbox_toolbar.pack_start(self.toolbar, False, False)
 
@@ -189,22 +199,26 @@ class sigBox:
     def on_menu_signal_active(self, widget):
         """ Select signal view """
         self.notebook.set_current_page(0)
+    
+    def on_menu_filter_active(self, widget):
+        """ Select filter view """
+        self.notebook.set_current_page(1)
 
     def on_menu_freq_active(self, widget):
         """ Select frequency response view """
-        self.notebook.set_current_page(1)
+        self.notebook.set_current_page(2)
 
     def on_menu_ifft_active(self, widget):
         """ Select inverse fft response view """
-        self.notebook.set_current_page(2)
+        self.notebook.set_current_page(3)
 
     def on_menu_ceps_active(self, widget):
         """ Select cepstrum response view """
-        self.notebook.set_current_page(3)
+        self.notebook.set_current_page(4)
 
     def on_menu_spec_active(self, widget):
         """ Select power spectrum response view """
-        self.notebook.set_current_page(4)
+        self.notebook.set_current_page(5)
         
 
     def on_menu_about(self, widget):
@@ -249,11 +263,18 @@ class sigBox:
             self.config.writeConfig()
             self.config = None
 
+            self.notebook.set_current_page(0)
+
         self.dialog = None
 	
     def on_toolbutton_clear(self, widget):
     	""" Toolbutton clear clicked """ 
+        self.file = None
+        self.filter = None
+        self.fs = None
+        self.n = None
         self.signal_graph.clear_figure()
+        self.filter_graph.clear_figure()
         self.fft_graph.clear_figure()
         self.ifft_graph.clear_figure()
         self.ceps_graph.clear_figure()
@@ -286,7 +307,22 @@ class sigBox:
     def on_toolbutton_apply(self, widget):
         """ Toolbutton apply clicked """
         if self.file:
-            print self.file
+            # Get user options
+            self.config = Config()
+            opt = self.config.getConfig('freq_opt')
+            
+            b, a = self.filter
+
+            filter_apply(b, a, options = opt, graph = self.filter_graph)
+
+            self.filter_graph.axes.set_xlabel('Frequency [Hz]')
+            self.filter_graph.axes.set_ylabel('Amplitude')
+            self.filter_graph.axes.set_title('Freq response')
+            
+            self.notebook.set_current_page(1)
+
+            self.filter = None
+
 
     def on_toolbutton_execute(self, widget):
     	""" Toolbutton exceute clicked """
@@ -299,18 +335,20 @@ class sigBox:
         if self.glob_opt['exec'] == 'FIR filter design':
             opt = self.config.getConfig('filter_opt')
             b = fir_design(options = opt)
-            filter_response(b, 1, graph = self.fft_graph, fs = opt['fs']) 
-            self.fft_graph.axes.set_xlabel('Frequency [Hz]')
-            self.fft_graph.axes.set_ylabel('Amplitude')
-            self.fft_graph.axes.set_title('FIR response')
+            self.filter = [b, 1]
+            filter_response(b, 1, graph = self.filter_graph, fs = opt['fs']) 
+            self.filter_graph.axes.set_xlabel('Frequency [Hz]')
+            self.filter_graph.axes.set_ylabel('Amplitude')
+            self.filter_graph.axes.set_title('FIR response')
             self.notebook.set_current_page(1)
         elif self.glob_opt['exec'] == 'IIR filter design':
             opt = self.config.getConfig('filter_opt')
             b, a = iir_design(options = opt)
-            filter_response(b, a, graph = self.fft_graph, fs = opt['fs'])            
-            self.fft_graph.axes.set_xlabel('Frequency [Hz]')
-            self.fft_graph.axes.set_ylabel('Amplitude')
-            self.fft_graph.axes.set_title('IIR response')
+            self.filter = [b, a]
+            filter_response(b, a, graph = self.filter_graph, fs = opt['fs'])            
+            self.filter_graph.axes.set_xlabel('Frequency [Hz]')
+            self.filter_graph.axes.set_ylabel('Amplitude')
+            self.filter_graph.axes.set_title('IIR response')
             self.notebook.set_current_page(1)
         elif self.glob_opt['exec'] == 'Frecuency response':
             # Get user options
@@ -333,7 +371,7 @@ class sigBox:
             self.spec_graph.axes.set_xlabel('Frequency [Hz]')
             self.spec_graph.axes.set_ylabel('Amplitude')
             self.spec_graph.axes.set_title('Power spectrum')
-            self.notebook.set_current_page(1)
+            self.notebook.set_current_page(2)
         
         # Unref options
         self.config = None 
