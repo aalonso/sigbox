@@ -1,0 +1,15 @@
+Linux install
+
+sudo python setup.py
+
+Installs the python modules in the proper place,
+however several files (sigbox.glade, config.yaml)
+are placed on a different path that the application 
+doesn't specs and will crash.
+
+Until I fix this in the setup.py module
+you can run to start the application:
+
+python __init__.py
+
+

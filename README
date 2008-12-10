@@ -1,8 +1,14 @@
-Sibox is an application for digital filter design
+Sibox is an PyGtk application for digital filter design
 
+Feutures:
 
-Win install
-
-
+* FIR filter design
+* IIR filter design
+* Load audio wav files and display
+    * Frequency representation
+    * Inverse frequency representation
+    * Power sprectrum
+    * Cepstrum
+    * Filtered signal
 
 

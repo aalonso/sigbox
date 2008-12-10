@@ -172,14 +172,16 @@ def filter_apply(b, a, graph = None, options = {}):
             n = n - m
         else:
             n = N
-        #r = lfilter(b, a, y)
-        #r = convolve(b, y)
-        r = correlate(b, y)
 
-        Y = fft(r, n = int(n))
+        r = lfilter(b, a, y)
+        #r = convolve(b, y)
+        #r = correlate(b, y)
+
+        Y = abs(fft(r))
+        n = len(Y)
         f = (fs/n)*r_[0:n]
 
-        graph.plot(f[0:int(n/2)], Y[0:int(n/2)])
+        graph.semilogy(f[0:int(n/2)], Y[0:int(n/2)])
         #graph.semilogy(t, r[0:n])
 
 

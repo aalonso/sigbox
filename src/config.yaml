@@ -14,8 +14,8 @@ freq_opt:
   linear: false
   log: false
   rm_freqs: 0.0
-  seg_m: 2147
-  seg_n: 2377
+  seg_m: 2324
+  seg_n: 2643
   win: hamming
 glob_opt:
   exec: FIR filter design
